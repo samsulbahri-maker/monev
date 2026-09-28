@@ -1,0 +1,2 @@
+@extends('layouts.app')
+@section('content')<div class="eyebrow">Master data</div><h2>Edit OPD</h2><div class="card"><form method="post" action="{{ route('opds.update', $opd) }}">@method('PUT') @include('opds._form')</form></div>@endsection

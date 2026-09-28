@@ -1,0 +1,2 @@
+@extends('layouts.app')
+@section('content')<div class="eyebrow">Master data</div><h2>Tambah user</h2><div class="card"><form method="post" action="{{ route('users.store') }}">@include('users._form')</form></div>@endsection

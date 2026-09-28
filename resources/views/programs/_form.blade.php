@@ -1,0 +1,6 @@
+@php($selectedOpds = old('opd_ids', $program?->opds?->pluck('id')->all() ?? []))
+@csrf
+<div class="grid grid-2"><div class="field"><label>Nama program *</label><input name="name" value="{{ old('name', $program?->name) }}" required autofocus></div><div class="field"><label>Jenis *</label><select name="type" required>@foreach($types as $type)<option value="{{ $type }}" @selected(old('type', $program?->type) === $type)>{{ $type }}</option>@endforeach</select></div></div>
+<div class="field"><label>OPD pelaksana</label><div class="grid grid-2">@foreach($opds as $opd)<label style="font-weight:normal"><input type="checkbox" name="opd_ids[]" value="{{ $opd->id }}" @checked(in_array($opd->id, $selectedOpds)) style="width:auto;margin-right:6px">{{ $opd->name }}</label>@endforeach</div></div>
+<div class="field"><label style="font-weight:normal"><input type="checkbox" name="is_active" value="1" @checked(old('is_active', $program?->is_active ?? true)) style="width:auto;margin-right:6px"> Program aktif</label></div>
+<button class="btn btn-primary">Simpan program</button> <a class="btn btn-secondary" href="{{ route('programs.index') }}">Batal</a>
