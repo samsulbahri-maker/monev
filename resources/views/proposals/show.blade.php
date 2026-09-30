@@ -71,7 +71,7 @@
                     <td><span class="badge">{{ $update->status }}</span></td>
                     <td>{{ $update->percentage }}%</td>
                     <td>{{ $update->notes ?: '-' }}</td>
-                    <td>@if($update->evidence_path)<a href="{{ asset('storage/' . $update->evidence_path) }}"
+                    <td>@if($update->evidence_path)<a href="{{ route('proposals.progress.evidence', [$proposal, $update]) }}"
                     target="_blank" style="color:var(--teal)">Lihat file</a>@else<span class="muted">-</span>@endif
                     </td>
             </tr>@empty<tr>

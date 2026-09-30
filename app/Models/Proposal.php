@@ -12,6 +12,21 @@ class Proposal extends Model
 {
     use HasFactory;
 
+    public const STATUSES = [
+        'Tercantum Dalam DPA',
+        'Proses RUP',
+        'Proses Pengadaan',
+        'Proses Pekerjaan',
+        'Proses Pencairan',
+        'Selesai',
+    ];
+
+    public const WORK_TYPES = [
+        'Fisik Konstruksi',
+        'Fisik Non Konstruksi',
+        'Non Fisik Non Konstruksi',
+    ];
+
     protected $fillable = [
         'program_id', 'opd_id', 'created_by', 'budget_year', 'work_type',
         'work_description', 'location', 'map_url', 'main_budget',

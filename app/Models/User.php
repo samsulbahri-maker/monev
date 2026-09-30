@@ -47,6 +47,11 @@ class User extends Authenticatable
         return $this->role === 'pic_opd';
     }
 
+    public function canManageProposals(): bool
+    {
+        return $this->role !== 'viewer';
+    }
+
     public function assignedOpdIds(): Collection
     {
         return $this->opds()->pluck('opds.id')

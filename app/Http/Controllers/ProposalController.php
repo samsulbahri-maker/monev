@@ -9,8 +9,10 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ProposalController extends Controller
 {
@@ -41,12 +43,13 @@ class ProposalController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        abort_unless($request->user()->canManageProposals(), 403);
         $data = $this->validated($request);
         $supportingDocuments = $this->supportingDocuments($data['supporting_documents'] ?? []);
         unset($data['supporting_documents']);
         $data['supporting_budget'] = collect($supportingDocuments)->sum(fn (array $document) => $document['amount']);
         if ($request->hasFile('evidence')) {
-            $data['evidence_path'] = $request->file('evidence')->store('evidence', 'public');
+            $data['evidence_path'] = $request->file('evidence')->store('evidence', 'local');
         }
         $proposal = Proposal::create($data + ['created_by' => $request->user()->id]);
         $proposal->supportingDocumentItems()->createMany($supportingDocuments);
@@ -72,13 +75,14 @@ class ProposalController extends Controller
 
     public function update(Request $request, Proposal $proposal): RedirectResponse
     {
+        abort_unless($request->user()->canManageProposals(), 403);
         abort_unless($proposal->isAccessibleTo($request->user()), 403);
         $data = $this->validated($request);
         $supportingDocuments = $this->supportingDocuments($data['supporting_documents'] ?? []);
         unset($data['supporting_documents']);
         $data['supporting_budget'] = collect($supportingDocuments)->sum(fn (array $document) => $document['amount']);
         if ($request->hasFile('evidence')) {
-            $data['evidence_path'] = $request->file('evidence')->store('evidence', 'public');
+            $data['evidence_path'] = $request->file('evidence')->store('evidence', 'local');
         }
         $proposal->update($data);
         $proposal->supportingDocumentItems()->delete();
@@ -89,10 +93,19 @@ class ProposalController extends Controller
 
     public function destroy(Proposal $proposal): RedirectResponse
     {
+        abort_unless(request()->user()->canManageProposals(), 403);
         abort_unless($proposal->isAccessibleTo(request()->user()), 403);
         $proposal->delete();
 
         return redirect()->route('proposals.index')->with('success', 'Usulan kegiatan dihapus.');
+    }
+
+    public function evidence(Request $request, Proposal $proposal): BinaryFileResponse
+    {
+        abort_unless($proposal->isAccessibleTo($request->user()), 403);
+        abort_unless($proposal->evidence_path && Storage::disk('local')->exists($proposal->evidence_path), 404);
+
+        return response()->download(Storage::disk('local')->path($proposal->evidence_path));
     }
 
     private function formData(?Proposal $proposal, User $user): array
@@ -137,7 +150,7 @@ class ProposalController extends Controller
                 Rule::when($request->user()->isPicOpd(), Rule::in($request->user()->assignedOpdIds()->all())),
             ],
             'budget_year' => ['required', 'integer', 'min:2000', 'max:2200'],
-            'work_type' => ['required', 'string', 'max:80'],
+            'work_type' => ['required', Rule::in(Proposal::WORK_TYPES)],
             'work_description' => ['nullable', 'string'],
             'location' => ['nullable', 'string'],
             'map_url' => ['nullable', 'url', 'max:255'],
@@ -146,7 +159,7 @@ class ProposalController extends Controller
             'supporting_documents.*.name' => ['required', 'string', 'max:120'],
             'supporting_documents.*.amount' => ['required', 'numeric', 'min:0'],
             'execution_date' => ['nullable', 'date'],
-            'status' => ['required', 'string', 'max:40'],
+            'status' => ['required', Rule::in(Proposal::STATUSES)],
             'progress_percentage' => ['required', 'integer', 'min:0', 'max:100'],
             'achievement' => ['nullable', 'string'],
             'evidence' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
@@ -162,7 +175,7 @@ class ProposalController extends Controller
 
     private function statuses(): array
     {
-        return ['Tercantum Dalam DPA', 'Proses RUP', 'Proses Pengadaan', 'Proses Pekerjaan', 'Proses Pencairan', 'Selesai'];
+        return Proposal::STATUSES;
     }
 
     private function supportingDocuments(array $documents): array
