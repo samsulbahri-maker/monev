@@ -18,6 +18,7 @@ class MasterDataTest extends TestCase
         $user = User::factory()->create(['role' => 'admin']);
 
         $this->actingAs($user)->get(route('opds.index'))->assertOk();
+        $this->actingAs($user)->get(route('opds.create'))->assertOk();
         $this->actingAs($user)->get(route('programs.index'))->assertOk();
         $this->actingAs($user)->get(route('users.index'))->assertOk();
     }

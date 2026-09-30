@@ -23,7 +23,7 @@ class OpdController extends Controller
 
     public function create(): View
     {
-        return view('opds.create');
+        return view('opds.create', ['opd' => null]);
     }
 
     public function store(Request $request): RedirectResponse

@@ -9,6 +9,6 @@
         <label style="font-weight:normal;margin-bottom:20px"><input style="width:auto;margin-right:7px" type="checkbox" name="remember"> Ingat saya</label>
         <button class="btn btn-primary" style="width:100%">Masuk ke aplikasi</button>
     </form>
-    <p class="help" style="margin-top:22px;margin-bottom:0">Akun awal: admin@monev.test / password</p>
+    <p class="help" style="margin-top:22px;margin-bottom:0">Bappelitbangda @2026</p>
 </div></div>
 @endsection

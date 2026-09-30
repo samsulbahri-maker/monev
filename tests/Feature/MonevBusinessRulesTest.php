@@ -18,6 +18,7 @@ class MonevBusinessRulesTest extends TestCase
         $user = User::factory()->create();
         $opd = Opd::create(['name' => 'OPD Pengujian']);
         $program = Program::create(['name' => 'Program Pengujian', 'type' => 'Prioritas KDH/WKDH']);
+        $program->opds()->attach($opd);
 
         Proposal::create([
             'program_id' => $program->id,
@@ -87,6 +88,7 @@ class MonevBusinessRulesTest extends TestCase
         $user = User::factory()->create();
         $opd = Opd::create(['name' => 'OPD Dokumen']);
         $program = Program::create(['name' => 'Program Dokumen', 'type' => 'Strategis']);
+        $program->opds()->attach($opd);
 
         $response = $this->actingAs($user)->post(route('proposals.store'), [
             'program_id' => $program->id,
@@ -109,5 +111,26 @@ class MonevBusinessRulesTest extends TestCase
             'amount' => 20000000,
         ]);
         $this->assertSame(35000000.0, (float) $proposal->fresh()->supporting_budget);
+    }
+
+    public function test_opd_options_follow_the_selected_program_and_mismatched_opd_is_rejected(): void
+    {
+        $user = User::factory()->create();
+        $assignedOpd = Opd::create(['name' => 'OPD Program A']);
+        $otherOpd = Opd::create(['name' => 'OPD Program B']);
+        $program = Program::create(['name' => 'Program A', 'type' => 'Strategis']);
+        $program->opds()->attach($assignedOpd);
+
+        $this->actingAs($user)->get(route('proposals.create'))
+            ->assertViewHas('programs', fn ($programs) => $programs->firstWhere('id', $program->id)->opds->pluck('id')->all() === [$assignedOpd->id]);
+
+        $this->actingAs($user)->post(route('proposals.store'), [
+            'program_id' => $program->id,
+            'opd_id' => $otherOpd->id,
+            'budget_year' => 2026,
+            'work_type' => 'Fisik Konstruksi',
+            'status' => 'Tercantum Dalam DPA',
+            'progress_percentage' => 0,
+        ])->assertSessionHasErrors('opd_id');
     }
 }

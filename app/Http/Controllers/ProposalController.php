@@ -105,7 +105,10 @@ class ProposalController extends Controller
         return [
             'proposal' => $proposal,
             'supportingDocuments' => old('supporting_documents', $supportingDocuments ?: [['name' => '', 'amount' => '']]),
-            'programs' => Program::where('is_active', true)
+            'programs' => Program::with(['opds' => fn ($query) => $user->isPicOpd()
+                ? $query->whereIn('opds.id', $user->assignedOpdIds())
+                : $query])
+                ->where('is_active', true)
                 ->when($user->isPicOpd(), fn ($query) => $query->whereHas('opds', fn ($opdQuery) => $opdQuery->whereIn('opds.id', $user->assignedOpdIds())))
                 ->orderBy('type')->orderBy('name')->get(),
             'opds' => $this->accessibleOpds($user),
@@ -130,6 +133,7 @@ class ProposalController extends Controller
             'opd_id' => [
                 'required',
                 'exists:opds,id',
+                Rule::exists('program_opd', 'opd_id')->where(fn ($query) => $query->where('program_id', $request->integer('program_id'))),
                 Rule::when($request->user()->isPicOpd(), Rule::in($request->user()->assignedOpdIds()->all())),
             ],
             'budget_year' => ['required', 'integer', 'min:2000', 'max:2200'],
