@@ -23,6 +23,8 @@
 		opdSelect.disabled = opds.length === 0;
 		if (opds.some((opd) => String(opd.id) === String(selectedOpd))) {
 			opdSelect.value = selectedOpd;
+		} else if (opds.length === 1) {
+			opdSelect.value = opds[0].id;
 		}
 	}
 

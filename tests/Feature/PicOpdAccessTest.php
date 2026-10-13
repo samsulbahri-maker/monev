@@ -48,6 +48,32 @@ class PicOpdAccessTest extends TestCase
         $this->actingAs($pic)->get(route('opds.index'))->assertForbidden();
     }
 
+    public function test_pic_opd_can_only_submit_programs_assigned_to_their_opds(): void
+    {
+        $pic = User::factory()->create(['role' => 'pic_opd']);
+        $assignedOpd = Opd::create(['name' => 'OPD PIC Ditugaskan']);
+        $outsideOpd = Opd::create(['name' => 'OPD Di Luar Penugasan']);
+        $pic->opds()->attach($assignedOpd);
+        $assignedProgram = Program::create(['name' => 'Program Ditugaskan', 'type' => 'Strategis']);
+        $assignedProgram->opds()->attach($assignedOpd);
+        $outsideProgram = Program::create(['name' => 'Program Di Luar', 'type' => 'Strategis']);
+        $outsideProgram->opds()->attach($outsideOpd);
+
+        $this->actingAs($pic)->get(route('proposals.create'))
+            ->assertOk()
+            ->assertViewHas('programs', fn ($programs) => $programs->pluck('id')->contains($assignedProgram->id)
+                && ! $programs->pluck('id')->contains($outsideProgram->id));
+
+        $this->actingAs($pic)->post(route('proposals.store'), [
+            'program_id' => $outsideProgram->id,
+            'opd_id' => $assignedOpd->id,
+            'budget_year' => 2026,
+            'work_type' => 'Fisik Konstruksi',
+            'status' => 'Tercantum Dalam DPA',
+            'progress_percentage' => 0,
+        ])->assertSessionHasErrors('program_id');
+    }
+
     public function test_pic_opd_can_be_created_with_multiple_opds(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);

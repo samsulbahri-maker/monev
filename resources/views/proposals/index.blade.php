@@ -39,7 +39,9 @@
                 <tr>
                     <td><a
                             href="{{ route('proposals.show', $proposal) }}"><strong>{{ $proposal->program->name }}</strong></a><br><span
-                            class="muted">{{ Str::limit($proposal->work_description, 70) }}</span></td>
+                            class="muted">{{ Str::limit($proposal->work_description, 70) }}</span>
+                        <br><span
+                            class="muted">{{ Str::limit($proposal->location, 70) }}</span></td>
                     <td>{{ $proposal->opd->name }}</td>
                     <td>{{ $proposal->budget_year }}</td>
                     <td><strong>{{ $proposal->progress_percentage }}%</strong>

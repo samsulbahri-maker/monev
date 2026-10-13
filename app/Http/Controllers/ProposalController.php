@@ -138,6 +138,11 @@ class ProposalController extends Controller
             'program_id' => [
                 'required',
                 'exists:programs,id',
+                Rule::when(
+                    $request->user()->isPicOpd(),
+                    Rule::exists('program_opd', 'program_id')->where(fn ($query) => $query
+                        ->whereIn('opd_id', $request->user()->assignedOpdIds()->all())),
+                ),
                 Rule::unique('proposals')->where(fn ($query) => $query
                     ->where('opd_id', $request->integer('opd_id'))
                     ->where('budget_year', $request->integer('budget_year'))

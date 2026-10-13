@@ -29,7 +29,10 @@
         <tbody>@forelse($proposals as $proposal)
             <tr>
                 <td><strong>{{ $proposal->program->name }}</strong><br><span
-                        class="muted">{{ $proposal->opd->name }}</span></td>
+                        class="muted">{{ $proposal->opd->name }}</span><br>
+                        <span
+                        class="muted">{{ $proposal->location }}</span>
+                    </td>
                 @foreach(range(1, 12) as $month)@php($update = $proposal->progressUpdates->firstWhere('month', $month))
                 <td>@if($update)<span
                 class="badge">{{ $update->percentage }}%</span><br><small>{{ Str::limit($update->status, 15) }}</small>@else<span
