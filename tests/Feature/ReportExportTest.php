@@ -15,6 +15,23 @@ class ReportExportTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_report_program_filter_options_follow_the_selected_opd(): void
+    {
+        $user = User::factory()->create();
+        $selectedOpd = Opd::create(['name' => 'OPD Filter']);
+        $otherOpd = Opd::create(['name' => 'OPD Lain']);
+        $selectedProgram = Program::create(['name' => 'Program OPD Filter', 'type' => 'Strategis']);
+        $otherProgram = Program::create(['name' => 'Program OPD Lain', 'type' => 'Strategis']);
+        $selectedProgram->opds()->attach($selectedOpd);
+        $otherProgram->opds()->attach($otherOpd);
+
+        $response = $this->actingAs($user)->get(route('reports.index', ['opd_id' => $selectedOpd->id]));
+
+        $response->assertViewHas('programs', function ($programs) use ($selectedProgram): bool {
+            return $programs->pluck('id')->all() === [$selectedProgram->id];
+        });
+    }
+
     public function test_export_contains_related_data_and_respects_year_and_opd_filters(): void
     {
         $user = User::factory()->create(['name' => 'Admin Penguji', 'email' => 'admin@example.test']);
@@ -69,6 +86,7 @@ class ReportExportTest extends TestCase
         $response = $this->actingAs($user)->get(route('reports.export', [
             'year' => 2026,
             'opd_id' => $includedOpd->id,
+            'program_id' => $includedProgram->id,
         ]));
 
         $response->assertDownload('laporan-progres-2026.csv');

@@ -83,6 +83,56 @@ class MonevBusinessRulesTest extends TestCase
         $this->assertSame('Proses Pekerjaan', $proposal->fresh()->status);
     }
 
+    public function test_progress_can_be_edited_and_deleted_from_the_proposal_detail(): void
+    {
+        $user = User::factory()->create();
+        $opd = Opd::create(['name' => 'OPD Edit Progres']);
+        $program = Program::create(['name' => 'Program Edit Progres', 'type' => 'Strategis']);
+        $proposal = Proposal::create([
+            'program_id' => $program->id,
+            'opd_id' => $opd->id,
+            'created_by' => $user->id,
+            'budget_year' => 2026,
+            'work_type' => 'Fisik Konstruksi',
+            'status' => 'Tercantum Dalam DPA',
+        ]);
+        $progressUpdate = $proposal->progressUpdates()->create([
+            'month' => 1,
+            'status' => 'Proses RUP',
+            'percentage' => 20,
+            'notes' => 'Catatan awal',
+        ]);
+
+        $this->actingAs($user)->put(route('proposals.progress.update', [$proposal, $progressUpdate]), [
+            'month' => 1,
+            'status' => 'Selesai',
+            'percentage' => 100,
+            'notes' => 'Catatan diperbarui',
+        ])->assertRedirect(route('proposals.show', $proposal));
+
+        $this->assertDatabaseHas('progress_updates', [
+            'id' => $progressUpdate->id,
+            'status' => 'Selesai',
+            'percentage' => 100,
+            'notes' => 'Catatan diperbarui',
+        ]);
+        $this->assertDatabaseHas('proposals', [
+            'id' => $proposal->id,
+            'status' => 'Selesai',
+            'progress_percentage' => 100,
+        ]);
+
+        $this->actingAs($user)->delete(route('proposals.progress.destroy', [$proposal, $progressUpdate]))
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('progress_updates', ['id' => $progressUpdate->id]);
+        $this->assertDatabaseHas('proposals', [
+            'id' => $proposal->id,
+            'status' => Proposal::STATUSES[0],
+            'progress_percentage' => 0,
+        ]);
+    }
+
     public function test_supporting_documents_and_their_budgets_are_saved_as_rows(): void
     {
         $user = User::factory()->create();

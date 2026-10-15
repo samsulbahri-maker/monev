@@ -21,6 +21,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/', DashboardController::class)->name('dashboard');
     Route::resource('proposals', ProposalController::class);
     Route::post('proposals/{proposal}/progress', [ProgressController::class, 'store'])->name('proposals.progress.store');
+    Route::get('proposals/{proposal}/progress/{progressUpdate}/edit', [ProgressController::class, 'edit'])
+        ->scopeBindings()
+        ->name('proposals.progress.edit');
+    Route::put('proposals/{proposal}/progress/{progressUpdate}', [ProgressController::class, 'update'])
+        ->scopeBindings()
+        ->name('proposals.progress.update');
+    Route::delete('proposals/{proposal}/progress/{progressUpdate}', [ProgressController::class, 'destroy'])
+        ->scopeBindings()
+        ->name('proposals.progress.destroy');
     Route::get('proposals/{proposal}/evidence', [ProposalController::class, 'evidence'])->name('proposals.evidence');
     Route::get('proposals/{proposal}/progress/{progressUpdate}/evidence', [ProgressController::class, 'evidence'])
         ->scopeBindings()

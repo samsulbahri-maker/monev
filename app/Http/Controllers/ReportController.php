@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Opd;
+use App\Models\Program;
 use App\Models\Proposal;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -24,6 +25,12 @@ class ReportController extends Controller
             'opds' => $user->isPicOpd()
                 ? Opd::whereIn('id', $user->assignedOpdIds())->orderBy('name')->get()
                 : Opd::orderBy('name')->get(),
+            'programs' => Program::query()
+                ->with('opds:id')
+                ->when($user->isPicOpd(), fn ($query) => $query->whereHas('opds', fn ($opdQuery) => $opdQuery->whereIn('opds.id', $user->assignedOpdIds())))
+                ->when($request->filled('opd_id'), fn ($query) => $query->whereHas('opds', fn ($opdQuery) => $opdQuery->where('opds.id', $request->integer('opd_id'))))
+                ->orderBy('name')
+                ->get(),
         ]);
     }
 
@@ -103,7 +110,8 @@ class ReportController extends Controller
                 'progressUpdates' => fn ($query) => $query->orderBy('month'),
             ])
             ->where('budget_year', $request->integer('year', now()->year))
-            ->when($request->filled('opd_id'), fn ($query) => $query->where('opd_id', $request->integer('opd_id')));
+            ->when($request->filled('opd_id'), fn ($query) => $query->where('opd_id', $request->integer('opd_id')))
+            ->when($request->filled('program_id'), fn ($query) => $query->where('program_id', $request->integer('program_id')));
     }
 
     /**

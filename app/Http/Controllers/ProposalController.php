@@ -61,8 +61,11 @@ class ProposalController extends Controller
     {
         abort_unless($proposal->isAccessibleTo($request->user()), 403);
         $proposal->load(['program', 'opd', 'supportingDocumentItems', 'progressUpdates' => fn ($query) => $query->orderBy('month')]);
+        $editingProgress = $request->filled('edit_progress')
+            ? $proposal->progressUpdates->firstWhere('id', $request->integer('edit_progress'))
+            : null;
 
-        return view('proposals.show', compact('proposal'));
+        return view('proposals.show', compact('proposal', 'editingProgress'));
     }
 
     public function edit(Request $request, Proposal $proposal): View
@@ -125,7 +128,7 @@ class ProposalController extends Controller
                 ->when($user->isPicOpd(), fn ($query) => $query->whereHas('opds', fn ($opdQuery) => $opdQuery->whereIn('opds.id', $user->assignedOpdIds())))
                 ->orderBy('type')->orderBy('name')->get(),
             'opds' => $this->accessibleOpds($user),
-            'statuses' => $this->statuses(),
+
             'workTypes' => ['Fisik Konstruksi', 'Fisik Non Konstruksi', 'Non Fisik Non Konstruksi'],
         ];
     }
@@ -143,9 +146,10 @@ class ProposalController extends Controller
                     Rule::exists('program_opd', 'program_id')->where(fn ($query) => $query
                         ->whereIn('opd_id', $request->user()->assignedOpdIds()->all())),
                 ),
-                Rule::unique('proposals')->where(fn ($query) => $query
-                    ->where('opd_id', $request->integer('opd_id'))
-                    ->where('budget_year', $request->integer('budget_year'))
+                Rule::unique('proposals')->where(
+                    fn ($query) => $query
+                        ->where('opd_id', $request->integer('opd_id'))
+                        ->where('budget_year', $request->integer('budget_year'))
                 )->ignore($proposal?->id),
             ],
             'opd_id' => [
@@ -164,9 +168,7 @@ class ProposalController extends Controller
             'supporting_documents.*.name' => ['required', 'string', 'max:120'],
             'supporting_documents.*.amount' => ['required', 'numeric', 'min:0'],
             'execution_date' => ['nullable', 'date'],
-            'status' => ['required', Rule::in(Proposal::STATUSES)],
-            'progress_percentage' => ['required', 'integer', 'min:0', 'max:100'],
-            'achievement' => ['nullable', 'string'],
+
             'evidence' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
         ]);
     }

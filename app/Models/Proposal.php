@@ -13,6 +13,7 @@ class Proposal extends Model
     use HasFactory;
 
     public const STATUSES = [
+        'Penyusunan Dokumen Persiapan',
         'Tercantum Dalam DPA',
         'Proses RUP',
         'Proses Pengadaan',
@@ -28,10 +29,22 @@ class Proposal extends Model
     ];
 
     protected $fillable = [
-        'program_id', 'opd_id', 'created_by', 'budget_year', 'work_type',
-        'work_description', 'location', 'map_url', 'main_budget',
-        'supporting_documents', 'supporting_budget', 'execution_date',
-        'status', 'progress_percentage', 'achievement', 'evidence_path',
+        'program_id',
+        'opd_id',
+        'created_by',
+        'budget_year',
+        'work_type',
+        'work_description',
+        'location',
+        'map_url',
+        'main_budget',
+        'supporting_documents',
+        'supporting_budget',
+        'execution_date',
+        'status',
+        'progress_percentage',
+        'achievement',
+        'evidence_path',
     ];
 
     protected function casts(): array
