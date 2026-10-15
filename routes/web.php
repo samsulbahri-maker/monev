@@ -26,6 +26,7 @@ Route::middleware('auth')->group(function () {
         ->scopeBindings()
         ->name('proposals.progress.evidence');
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/export', [ReportController::class, 'export'])->name('reports.export');
     Route::middleware('can:manage-master-data')->group(function () {
         Route::resource('opds', OpdController::class)->except('show');
         Route::resource('programs', ProgramController::class)->except('show');

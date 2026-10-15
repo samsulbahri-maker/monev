@@ -14,7 +14,10 @@
                     <option value="{{ $opd->id }}" @selected(request('opd_id') == $opd->id)>{{ $opd->name }}</option>
                 @endforeach
             </select></div>
-        <div style="padding-top:19px"><button class="btn btn-primary">Tampilkan</button></div>
+        <div style="padding-top:19px" class="actions">
+            <button class="btn btn-primary" type="submit">Tampilkan</button>
+            <button class="btn btn-secondary" type="submit" formaction="{{ route('reports.export') }}">Export Excel</button>
+        </div>
     </div>
 </form>
 <div class="card">
