@@ -8,8 +8,12 @@ $program->id => $program->opds->map(fn ($opd) => ['id' => $opd->id, 'name' => $o
 @csrf
 <div class="grid grid-2">
 	<div class="field"><label for="program_search">Program prioritas / strategis *</label>
-		<input id="program_search" type="search" placeholder="Cari nama program..." autocomplete="off">
-		<select id="program_id" name="program_id" required>
+		<div class="searchable-select" id="proposal-program-searchable">
+			<input id="program_search" type="search" placeholder="Cari nama program..." autocomplete="off" role="combobox" aria-controls="proposal-program-options" aria-expanded="false">
+			<input id="program_id" type="hidden" name="program_id" value="{{ $selectedProgramId }}" required>
+			<div id="proposal-program-options" class="searchable-options" role="listbox"></div>
+		</div>
+		<select id="program-source" aria-hidden="true" tabindex="-1">
 			<option value="">Pilih program</option>@foreach($programs as $program)<option value="{{ $program->id }}" data-search="{{ strtolower($program->name.' '.$program->type) }}" @selected($selectedProgramId == $program->id)>{{ $program->name }} ({{ $program->type }})</option>@endforeach
 		</select>
 	</div>
@@ -44,9 +48,12 @@ $program->id => $program->opds->map(fn ($opd) => ['id' => $opd->id, 'name' => $o
 	<script>
 		const programSearch = document.getElementById('program_search');
 		const programSelect = document.getElementById('program_id');
+		const programSource = document.getElementById('program-source');
+		const programSearchable = document.getElementById('proposal-program-searchable');
+		const programOptionsElement = document.getElementById('proposal-program-options');
 		const opdSelect = document.getElementById('opd_id');
 		const programOpds = @json($programOpds);
-		const programOptions = Array.from(programSelect.options).map((option) => ({
+		const programOptions = Array.from(programSource.options).map((option) => ({
 			value: option.value,
 			text: option.text,
 			search: option.dataset.search ?? '',
@@ -72,23 +79,49 @@ $program->id => $program->opds->map(fn ($opd) => ['id' => $opd->id, 'name' => $o
 
 		function filterPrograms() {
 			const searchTerm = programSearch.value.trim().toLowerCase();
-			const selectedValue = programSelect.value;
-			const matchingOptions = programOptions.filter((option) => !option.value || option.search.includes(searchTerm));
+			const matchingOptions = programOptions.filter((option) => !searchTerm || option.search.includes(searchTerm));
 
-			programSelect.replaceChildren(...matchingOptions.map((option) => {
-				const element = new Option(option.text, option.value, false, option.value === selectedValue);
-				if (option.search) {
-					element.dataset.search = option.search;
-				}
+			programOptionsElement.replaceChildren(...matchingOptions.map((option) => {
+				const element = document.createElement('button');
+				element.type = 'button';
+				element.className = 'searchable-option';
+				element.setAttribute('role', 'option');
+				element.textContent = option.value ? option.text : 'Pilih program';
+				element.addEventListener('click', () => {
+					programSelect.value = option.value;
+					programSearch.value = option.value ? option.text : '';
+					closeProgramOptions();
+					renderProgramOpds();
+				});
 				return element;
 			}));
 		}
 
 		programSearch.addEventListener('input', filterPrograms);
+		programSearch.addEventListener('focus', () => {
+			programSearchable.classList.add('is-open');
+			programSearch.setAttribute('aria-expanded', 'true');
+			filterPrograms();
+		});
+		document.addEventListener('click', (event) => {
+			if (!programSearchable.contains(event.target)) {
+				closeProgramOptions();
+			}
+		});
 		programSelect.addEventListener('change', () => {
 			opdSelect.dataset.selected = '';
 			renderProgramOpds();
 		});
+		function closeProgramOptions() {
+			programSearchable.classList.remove('is-open');
+			programSearch.setAttribute('aria-expanded', 'false');
+		}
+		function renderSelectedProgram() {
+			const selectedOption = programOptions.find((option) => option.value === String(programSelect.value));
+			programSearch.value = selectedOption?.text ?? '';
+		}
+		programSelect.value = '{{ $selectedProgramId }}';
+		renderSelectedProgram();
 		renderProgramOpds();
 
 		const documentContainer = document.getElementById('supporting-documents');

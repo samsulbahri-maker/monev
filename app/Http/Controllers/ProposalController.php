@@ -150,6 +150,11 @@ class ProposalController extends Controller
                     fn ($query) => $query
                         ->where('opd_id', $request->integer('opd_id'))
                         ->where('budget_year', $request->integer('budget_year'))
+                        ->when(
+                            $request->filled('work_description'),
+                            fn ($query) => $query->where('work_description', $request->string('work_description')->toString()),
+                            fn ($query) => $query->whereNull('work_description'),
+                        )
                 )->ignore($proposal?->id),
             ],
             'opd_id' => [

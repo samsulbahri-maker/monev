@@ -42,6 +42,36 @@ class MonevBusinessRulesTest extends TestCase
         $this->assertSame(1, Proposal::count());
     }
 
+    public function test_an_opd_can_submit_the_same_program_again_when_work_description_differs(): void
+    {
+        $user = User::factory()->create();
+        $opd = Opd::create(['name' => 'OPD Pengujian Deskripsi']);
+        $program = Program::create(['name' => 'Program Pengujian Deskripsi', 'type' => 'Strategis']);
+        $program->opds()->attach($opd);
+
+        Proposal::create([
+            'program_id' => $program->id,
+            'opd_id' => $opd->id,
+            'created_by' => $user->id,
+            'budget_year' => 2026,
+            'work_type' => 'Fisik Konstruksi',
+            'work_description' => 'Pekerjaan pertama',
+            'status' => 'Tercantum Dalam DPA',
+        ]);
+
+        $response = $this->actingAs($user)->post(route('proposals.store'), [
+            'program_id' => $program->id,
+            'opd_id' => $opd->id,
+            'budget_year' => 2026,
+            'work_type' => 'Fisik Konstruksi',
+            'work_description' => 'Pekerjaan kedua',
+            'status' => 'Tercantum Dalam DPA',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertSame(2, Proposal::count());
+    }
+
     public function test_progress_is_unique_per_month_and_updates_the_latest_proposal_summary(): void
     {
         $user = User::factory()->create();
